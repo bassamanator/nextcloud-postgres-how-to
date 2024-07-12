@@ -1,0 +1,45 @@
+services:
+  nextcloud:
+    container_name: nextcloud
+    image: nextcloud:latest
+    volumes:
+      - /data/directory/nextcloud-data:/var/www/html/data # NOTE User data directory
+      - ./nextcloud:/var/www/html
+      # - ./nextcloud-data:/var/www/html/data
+      # - './nextcloud/themes:/var/www/html/themes'
+      # - './nextcloud/config:/var/www/html/config'
+      # - './nextcloud/apps:/var/www/html/custom_apps'
+    environment:
+      - POSTGRES_HOST=nextcloud-postgres-db
+      - POSTGRES_PASSWORD=tester123
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=nextcloud
+      - NEXTCLOUD_ADMIN_USER=admin
+    ports:
+      - 8080:80
+    restart: unless-stopped
+    networks:
+      - nextcloud_network # Attaches the container to the 'nextcloud_network' network.
+
+  nextcloud-postgres-db:
+    container_name: nextcloud-postgres-db
+    image: postgres:16.3-bookworm
+    restart: on-failure
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data # NOTE PostgreSQL data directory
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=tester123
+    ports:
+      - 5432:5432
+    networks:
+      - nextcloud_network # Connects the database container to the same network as Nextcloud.
+
+networks:
+  nextcloud_network:
+    # Custom network for facilitating communication between services.
+    driver: bridge # Network type: bridge. Isolates containers in the same bridge network, allowing them to communicate.
+
+# NOTE
+# 1. nextcloud database needs to be created manually.
+# 2. `data` directory (/mnt/wdred2/docker/nextcloud-data) needs to be owned by `www-data` user and group
